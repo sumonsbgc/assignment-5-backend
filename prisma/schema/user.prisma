@@ -1,0 +1,37 @@
+model User {
+  id              Int              @id @default(autoincrement())
+  name            String
+  email           String           @unique
+  password        String
+  role            Role             @default(USER)
+  emailVerified   Boolean          @default(false)
+  avatarUrl       String?
+  refreshTokens   RefreshToken[]
+  reviews         Review[]
+  comments        Comment[]
+  likes           Like[]
+  watchlist       Watchlist[]
+  purchases       Purchase[]
+  subscriptions   Subscription[]
+  viewingHistory  ViewingHistory[]
+  reports         Report[]
+  createdAt       DateTime         @default(now())
+  updatedAt       DateTime         @updatedAt
+  deletedAt       DateTime?
+}
+
+model RefreshToken {
+  id        Int      @id @default(autoincrement())
+  token     String   @unique
+  userId    Int
+  user      User     @relation(fields: [userId], references: [id])
+  expiresAt DateTime
+  createdAt DateTime @default(now())
+  revokedAt DateTime?
+}
+
+enum Role {
+  USER
+  MODERATOR
+  ADMIN
+}
