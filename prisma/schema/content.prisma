@@ -1,0 +1,133 @@
+model Genre {
+  id        Int      @id @default(autoincrement())
+  name      String   @unique
+  slug      String   @unique
+  movies    Movie[]  @relation("MovieGenres")
+  series    Series[] @relation("SeriesGenres")
+  createdAt DateTime @default(now())
+}
+
+model Movie {
+  id             Int              @id @default(autoincrement())
+  title          String
+  slug           String           @unique
+  description    String?
+  year           Int
+  director       String
+  cast           String[]
+  genres         Genre[]          @relation("MovieGenres")
+  platforms      String[]
+  duration       Int
+  price          Float            @default(0)
+  isPremium      Boolean          @default(false)
+  videoUrl       String?
+  posterUrl      String
+  backdropUrl    String?
+  trailerUrl     String?
+  blurDataUrl    String?
+  averageRating  Float            @default(0)
+  reviewCount    Int              @default(0)
+  reviews        Review[]
+  watchlist      Watchlist[]
+  purchases      Purchase[]
+  viewingHistory ViewingHistory[]
+  status         ContentStatus    @default(DRAFT)
+  createdAt      DateTime         @default(now())
+  updatedAt      DateTime         @updatedAt
+  deletedAt      DateTime?
+}
+
+model Series {
+  id             Int           @id @default(autoincrement())
+  title          String
+  slug           String        @unique
+  description    String?
+  startYear      Int
+  endYear        Int?
+  creator        String
+  cast           String[]
+  genres         Genre[]       @relation("SeriesGenres")
+  platforms      String[]
+  isPremium      Boolean       @default(false)
+  price          Float         @default(0)
+  posterUrl      String
+  backdropUrl    String?
+  trailerUrl     String?
+  blurDataUrl    String?
+  averageRating  Float         @default(0)
+  reviewCount    Int           @default(0)
+  seasons        Season[]
+  reviews        Review[]
+  watchlist      Watchlist[]
+  purchases      Purchase[]
+  status         ContentStatus @default(DRAFT)
+  createdAt      DateTime      @default(now())
+  updatedAt      DateTime      @updatedAt
+  deletedAt      DateTime?
+}
+
+model Season {
+  id          Int       @id @default(autoincrement())
+  number      Int
+  title       String?
+  description String?
+  year        Int?
+  series      Series    @relation(fields: [seriesId], references: [id])
+  seriesId    Int
+  episodes    Episode[]
+  createdAt   DateTime  @default(now())
+  updatedAt   DateTime  @updatedAt
+
+  @@unique([seriesId, number])
+}
+
+model Episode {
+  id             Int              @id @default(autoincrement())
+  number         Int
+  title          String
+  description    String?
+  duration       Int
+  videoUrl       String?
+  thumbnailUrl   String?
+  season         Season           @relation(fields: [seasonId], references: [id])
+  seasonId       Int
+  viewingHistory ViewingHistory[]
+  createdAt      DateTime         @default(now())
+  updatedAt      DateTime         @updatedAt
+
+  @@unique([seasonId, number])
+}
+
+model VideoJob {
+  id           Int         @id @default(autoincrement())
+  contentType  String      // "movie" | "episode"
+  contentId    Int
+  status       JobStatus   @default(QUEUED)
+  rawKey       String?     // R2 key of uploaded raw file
+  outputPrefix String?     // R2 prefix for processed HLS segments
+  errorMessage String?
+  createdAt    DateTime    @default(now())
+  updatedAt    DateTime    @updatedAt
+}
+
+model EncryptionKey {
+  id        String   @id @default(uuid())
+  key       String   // hex-encoded AES-128 key
+  iv        String   // hex-encoded IV
+  contentType String // "movie" | "episode"
+  contentId Int
+  createdAt DateTime @default(now())
+}
+
+enum ContentStatus {
+  DRAFT
+  PUBLISHED
+  ARCHIVED
+}
+
+enum JobStatus {
+  QUEUED
+  PROCESSING
+  COMPLETED
+  FAILED
+}
