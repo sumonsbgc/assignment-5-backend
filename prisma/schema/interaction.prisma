@@ -1,0 +1,86 @@
+model Review {
+  id        Int          @id @default(autoincrement())
+  rating    Int
+  title     String?
+  text      String
+  spoiler   Boolean      @default(false)
+  status    ReviewStatus @default(PENDING)
+  user      User         @relation(fields: [userId], references: [id])
+  userId    Int
+  movie     Movie?       @relation(fields: [movieId], references: [id])
+  movieId   Int?
+  series    Series?      @relation(fields: [seriesId], references: [id])
+  seriesId  Int?
+  likes     Like[]
+  comments  Comment[]
+  reports   Report[]
+  createdAt DateTime     @default(now())
+  updatedAt DateTime     @updatedAt
+  deletedAt DateTime?
+
+  @@unique([userId, movieId])
+  @@unique([userId, seriesId])
+}
+
+model Like {
+  id        Int      @id @default(autoincrement())
+  user      User     @relation(fields: [userId], references: [id])
+  userId    Int
+  review    Review   @relation(fields: [reviewId], references: [id])
+  reviewId  Int
+  createdAt DateTime @default(now())
+
+  @@unique([userId, reviewId])
+}
+
+model Comment {
+  id        Int       @id @default(autoincrement())
+  text      String
+  user      User      @relation(fields: [userId], references: [id])
+  userId    Int
+  review    Review    @relation(fields: [reviewId], references: [id])
+  reviewId  Int
+  parent    Comment?  @relation("CommentReplies", fields: [parentId], references: [id])
+  parentId  Int?
+  children  Comment[] @relation("CommentReplies")
+  reports   Report[]
+  createdAt DateTime  @default(now())
+  updatedAt DateTime  @updatedAt
+  deletedAt DateTime?
+}
+
+model Watchlist {
+  id       Int      @id @default(autoincrement())
+  user     User     @relation(fields: [userId], references: [id])
+  userId   Int
+  movie    Movie?   @relation(fields: [movieId], references: [id])
+  movieId  Int?
+  series   Series?  @relation(fields: [seriesId], references: [id])
+  seriesId Int?
+  addedAt  DateTime @default(now())
+
+  @@unique([userId, movieId])
+  @@unique([userId, seriesId])
+}
+
+model ViewingHistory {
+  id          Int      @id @default(autoincrement())
+  user        User     @relation(fields: [userId], references: [id])
+  userId      Int
+  movie       Movie?   @relation(fields: [movieId], references: [id])
+  movieId     Int?
+  episode     Episode? @relation(fields: [episodeId], references: [id])
+  episodeId   Int?
+  progress    Int      @default(0)
+  completed   Boolean  @default(false)
+  lastWatched DateTime @default(now())
+
+  @@unique([userId, movieId])
+  @@unique([userId, episodeId])
+}
+
+enum ReviewStatus {
+  PENDING
+  APPROVED
+  REJECTED
+}
