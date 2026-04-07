@@ -1,0 +1,44 @@
+model Subscription {
+  id                 Int      @id @default(autoincrement())
+  user               User     @relation(fields: [userId], references: [id])
+  userId             Int
+  stripeSubId        String   @unique
+  stripeCustomerId   String
+  status             String
+  plan               String
+  currentPeriodStart DateTime
+  currentPeriodEnd   DateTime
+  cancelAtPeriodEnd  Boolean  @default(false)
+  createdAt          DateTime @default(now())
+  updatedAt          DateTime @updatedAt
+}
+
+model Purchase {
+  id              Int       @id @default(autoincrement())
+  user            User      @relation(fields: [userId], references: [id])
+  userId          Int
+  movie           Movie?    @relation(fields: [movieId], references: [id])
+  movieId         Int?
+  series          Series?   @relation(fields: [seriesId], references: [id])
+  seriesId        Int?
+  stripePaymentId String    @unique
+  amount          Float
+  currency        String    @default("usd")
+  status          String
+  refundedAt      DateTime?
+  refundAmount    Int?
+  createdAt       DateTime  @default(now())
+  updatedAt       DateTime  @updatedAt
+
+  @@index([userId, movieId, status])
+  @@index([userId, seriesId, status])
+}
+
+// Idempotency log for Stripe webhook events.
+// Why: Stripe retries webhooks with the same event.id; without this we'd
+// process refunds, subscription updates, etc. twice on transient 5xx replies.
+model StripeEvent {
+  id          String   @id // Stripe's event.id
+  type        String
+  processedAt DateTime @default(now())
+}
