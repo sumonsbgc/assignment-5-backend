@@ -1,0 +1,21 @@
+model Report {
+  id         Int          @id @default(autoincrement())
+  reason     String
+  details    String?
+  status     ReportStatus @default(OPEN)
+  user       User         @relation(fields: [userId], references: [id])
+  userId     Int
+  review     Review?      @relation(fields: [reviewId], references: [id])
+  reviewId   Int?
+  comment    Comment?     @relation(fields: [commentId], references: [id])
+  commentId  Int?
+  resolvedAt DateTime?
+  createdAt  DateTime     @default(now())
+}
+
+enum ReportStatus {
+  OPEN
+  REVIEWED
+  RESOLVED
+  DISMISSED
+}
