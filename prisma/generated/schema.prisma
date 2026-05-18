@@ -1,0 +1,334 @@
+model Genre {
+  id        Int      @id @default(autoincrement())
+  name      String   @unique
+  slug      String   @unique
+  movies    Movie[]  @relation("MovieGenres")
+  series    Series[] @relation("SeriesGenres")
+  createdAt DateTime @default(now())
+}
+
+model Movie {
+  id             Int              @id @default(autoincrement())
+  title          String
+  slug           String           @unique
+  description    String?
+  year           Int
+  director       String
+  cast           String[]
+  genres         Genre[]          @relation("MovieGenres")
+  platforms      String[]
+  duration       Int
+  price          Float            @default(0)
+  isPremium      Boolean          @default(false)
+  videoUrl       String?
+  posterUrl      String
+  backdropUrl    String?
+  trailerUrl     String?
+  blurDataUrl    String?
+  averageRating  Float            @default(0)
+  reviewCount    Int              @default(0)
+  reviews        Review[]
+  watchlist      Watchlist[]
+  purchases      Purchase[]
+  viewingHistory ViewingHistory[]
+  status         ContentStatus    @default(DRAFT)
+  createdAt      DateTime         @default(now())
+  updatedAt      DateTime         @updatedAt
+  deletedAt      DateTime?
+}
+
+model Series {
+  id            Int           @id @default(autoincrement())
+  title         String
+  slug          String        @unique
+  description   String?
+  startYear     Int
+  endYear       Int?
+  creator       String
+  cast          String[]
+  genres        Genre[]       @relation("SeriesGenres")
+  platforms     String[]
+  isPremium     Boolean       @default(false)
+  price         Float         @default(0)
+  posterUrl     String
+  backdropUrl   String?
+  trailerUrl    String?
+  blurDataUrl   String?
+  averageRating Float         @default(0)
+  reviewCount   Int           @default(0)
+  seasons       Season[]
+  reviews       Review[]
+  watchlist     Watchlist[]
+  purchases     Purchase[]
+  status        ContentStatus @default(DRAFT)
+  createdAt     DateTime      @default(now())
+  updatedAt     DateTime      @updatedAt
+  deletedAt     DateTime?
+}
+
+model Season {
+  id          Int       @id @default(autoincrement())
+  number      Int
+  title       String?
+  description String?
+  year        Int?
+  series      Series    @relation(fields: [seriesId], references: [id])
+  seriesId    Int
+  episodes    Episode[]
+  createdAt   DateTime  @default(now())
+  updatedAt   DateTime  @updatedAt
+
+  @@unique([seriesId, number])
+}
+
+model Episode {
+  id             Int              @id @default(autoincrement())
+  number         Int
+  title          String
+  description    String?
+  duration       Int
+  videoUrl       String?
+  thumbnailUrl   String?
+  season         Season           @relation(fields: [seasonId], references: [id])
+  seasonId       Int
+  viewingHistory ViewingHistory[]
+  createdAt      DateTime         @default(now())
+  updatedAt      DateTime         @updatedAt
+
+  @@unique([seasonId, number])
+}
+
+model VideoJob {
+  id           Int       @id @default(autoincrement())
+  contentType  String // "movie" | "episode"
+  contentId    Int
+  status       JobStatus @default(QUEUED)
+  rawKey       String? // R2 key of uploaded raw file
+  outputPrefix String? // R2 prefix for processed HLS segments
+  errorMessage String?
+  createdAt    DateTime  @default(now())
+  updatedAt    DateTime  @updatedAt
+}
+
+model EncryptionKey {
+  id          String   @id @default(uuid())
+  key         String // hex-encoded AES-128 key
+  iv          String // hex-encoded IV
+  contentType String // "movie" | "episode"
+  contentId   Int
+  createdAt   DateTime @default(now())
+}
+
+enum ContentStatus {
+  DRAFT
+  PUBLISHED
+  ARCHIVED
+}
+
+enum JobStatus {
+  QUEUED
+  PROCESSING
+  COMPLETED
+  FAILED
+}
+
+model Review {
+  id        Int          @id @default(autoincrement())
+  rating    Int
+  title     String?
+  text      String
+  spoiler   Boolean      @default(false)
+  status    ReviewStatus @default(PENDING)
+  user      User         @relation(fields: [userId], references: [id])
+  userId    Int
+  movie     Movie?       @relation(fields: [movieId], references: [id])
+  movieId   Int?
+  series    Series?      @relation(fields: [seriesId], references: [id])
+  seriesId  Int?
+  likes     Like[]
+  comments  Comment[]
+  reports   Report[]
+  createdAt DateTime     @default(now())
+  updatedAt DateTime     @updatedAt
+  deletedAt DateTime?
+
+  @@unique([userId, movieId])
+  @@unique([userId, seriesId])
+}
+
+model Like {
+  id        Int      @id @default(autoincrement())
+  user      User     @relation(fields: [userId], references: [id])
+  userId    Int
+  review    Review   @relation(fields: [reviewId], references: [id])
+  reviewId  Int
+  createdAt DateTime @default(now())
+
+  @@unique([userId, reviewId])
+}
+
+model Comment {
+  id        Int       @id @default(autoincrement())
+  text      String
+  user      User      @relation(fields: [userId], references: [id])
+  userId    Int
+  review    Review    @relation(fields: [reviewId], references: [id])
+  reviewId  Int
+  parent    Comment?  @relation("CommentReplies", fields: [parentId], references: [id])
+  parentId  Int?
+  children  Comment[] @relation("CommentReplies")
+  reports   Report[]
+  createdAt DateTime  @default(now())
+  updatedAt DateTime  @updatedAt
+  deletedAt DateTime?
+}
+
+model Watchlist {
+  id       Int      @id @default(autoincrement())
+  user     User     @relation(fields: [userId], references: [id])
+  userId   Int
+  movie    Movie?   @relation(fields: [movieId], references: [id])
+  movieId  Int?
+  series   Series?  @relation(fields: [seriesId], references: [id])
+  seriesId Int?
+  addedAt  DateTime @default(now())
+
+  @@unique([userId, movieId])
+  @@unique([userId, seriesId])
+}
+
+model ViewingHistory {
+  id          Int      @id @default(autoincrement())
+  user        User     @relation(fields: [userId], references: [id])
+  userId      Int
+  movie       Movie?   @relation(fields: [movieId], references: [id])
+  movieId     Int?
+  episode     Episode? @relation(fields: [episodeId], references: [id])
+  episodeId   Int?
+  progress    Int      @default(0)
+  completed   Boolean  @default(false)
+  lastWatched DateTime @default(now())
+
+  @@unique([userId, movieId])
+  @@unique([userId, episodeId])
+}
+
+enum ReviewStatus {
+  PENDING
+  APPROVED
+  REJECTED
+}
+
+model Report {
+  id         Int          @id @default(autoincrement())
+  reason     String
+  details    String?
+  status     ReportStatus @default(OPEN)
+  user       User         @relation(fields: [userId], references: [id])
+  userId     Int
+  review     Review?      @relation(fields: [reviewId], references: [id])
+  reviewId   Int?
+  comment    Comment?     @relation(fields: [commentId], references: [id])
+  commentId  Int?
+  resolvedAt DateTime?
+  createdAt  DateTime     @default(now())
+}
+
+enum ReportStatus {
+  OPEN
+  REVIEWED
+  RESOLVED
+  DISMISSED
+}
+
+model Subscription {
+  id                 Int      @id @default(autoincrement())
+  user               User     @relation(fields: [userId], references: [id])
+  userId             Int
+  stripeSubId        String   @unique
+  stripeCustomerId   String
+  status             String
+  plan               String
+  currentPeriodStart DateTime
+  currentPeriodEnd   DateTime
+  cancelAtPeriodEnd  Boolean  @default(false)
+  createdAt          DateTime @default(now())
+  updatedAt          DateTime @updatedAt
+}
+
+model Purchase {
+  id              Int       @id @default(autoincrement())
+  user            User      @relation(fields: [userId], references: [id])
+  userId          Int
+  movie           Movie?    @relation(fields: [movieId], references: [id])
+  movieId         Int?
+  series          Series?   @relation(fields: [seriesId], references: [id])
+  seriesId        Int?
+  stripePaymentId String    @unique
+  amount          Float
+  currency        String    @default("usd")
+  status          String
+  refundedAt      DateTime?
+  refundAmount    Int?
+  createdAt       DateTime  @default(now())
+  updatedAt       DateTime  @updatedAt
+
+  @@index([userId, movieId, status])
+  @@index([userId, seriesId, status])
+}
+
+// Idempotency log for Stripe webhook events.
+// Why: Stripe retries webhooks with the same event.id; without this we'd
+// process refunds, subscription updates, etc. twice on transient 5xx replies.
+model StripeEvent {
+  id          String   @id // Stripe's event.id
+  type        String
+  processedAt DateTime @default(now())
+}
+
+datasource db {
+  provider = "postgresql"
+}
+
+generator client {
+  provider = "prisma-client-js"
+  output   = "../generated"
+}
+
+model User {
+  id             Int              @id @default(autoincrement())
+  name           String
+  email          String           @unique
+  password       String
+  role           Role             @default(USER)
+  emailVerified  Boolean          @default(false)
+  avatarUrl      String?
+  refreshTokens  RefreshToken[]
+  reviews        Review[]
+  comments       Comment[]
+  likes          Like[]
+  watchlist      Watchlist[]
+  purchases      Purchase[]
+  subscriptions  Subscription[]
+  viewingHistory ViewingHistory[]
+  reports        Report[]
+  createdAt      DateTime         @default(now())
+  updatedAt      DateTime         @updatedAt
+  deletedAt      DateTime?
+}
+
+model RefreshToken {
+  id        Int       @id @default(autoincrement())
+  token     String    @unique
+  userId    Int
+  user      User      @relation(fields: [userId], references: [id])
+  expiresAt DateTime
+  createdAt DateTime  @default(now())
+  revokedAt DateTime?
+}
+
+enum Role {
+  USER
+  MODERATOR
+  ADMIN
+}
