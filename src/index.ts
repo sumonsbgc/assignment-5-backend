@@ -46,6 +46,11 @@ app.use(express.json({ limit: "10mb" }));
 app.use(express.urlencoded({ extended: true }));
 app.use(cookieParser());
 
+// Health check — Render uses this to confirm the service is up
+app.get("/health", (_req, res) => {
+  res.json({ status: "ok", uptime: process.uptime() });
+});
+
 // Rate limiting
 app.use("/api/v1", generalRateLimit);
 

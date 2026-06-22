@@ -1,0 +1,94 @@
+# Render Blueprint — assignment-5 backend
+# Deploy via: Render Dashboard → New → Blueprint → connect this repo
+#
+# After first deploy, set every env var marked `sync: false` in
+# Render Dashboard → Environment (values are never stored in this file).
+
+services:
+  - type: web
+    name: assignment-5-backend
+    runtime: node
+    plan: free
+    region: oregon
+    branch: main
+    buildCommand: pnpm install --frozen-lockfile && pnpm build && npx prisma migrate deploy
+    startCommand: node dist/index.js
+    healthCheckPath: /health
+    autoDeploy: false          # GitHub Actions handles deploys
+    envVars:
+      - key: NODE_ENV
+        value: production
+      - key: DATABASE_URL
+        fromDatabase:
+          name: assignment-5-db
+          property: connectionString
+      - key: REDIS_URL
+        sync: false            # Set to your Upstash Redis URL
+      - key: JWT_ACCESS_SECRET
+        generateValue: true
+      - key: JWT_REFRESH_SECRET
+        generateValue: true
+      - key: JWT_ACCESS_EXPIRES_IN
+        value: 15m
+      - key: JWT_REFRESH_EXPIRES_IN
+        value: 7d
+      - key: CSRF_SECRET
+        generateValue: true
+      - key: R2_ACCOUNT_ID
+        sync: false
+      - key: R2_ACCESS_KEY_ID
+        sync: false
+      - key: R2_SECRET_ACCESS_KEY
+        sync: false
+      - key: R2_BUCKET_NAME
+        sync: false
+      - key: R2_PUBLIC_URL
+        sync: false
+      - key: STRIPE_SECRET_KEY
+        sync: false
+      - key: STRIPE_WEBHOOK_SECRET
+        sync: false
+      - key: STRIPE_MONTHLY_PRICE_ID
+        sync: false
+      - key: STRIPE_ANNUAL_PRICE_ID
+        sync: false
+      - key: FRONTEND_URL
+        sync: false            # e.g. https://assignment-5-frontend.onrender.com
+
+  - type: worker
+    name: assignment-5-video-worker
+    runtime: node
+    plan: free
+    region: oregon
+    branch: main
+    buildCommand: pnpm install --frozen-lockfile && pnpm build
+    startCommand: node dist/workers/video-worker.js
+    autoDeploy: false
+    envVars:
+      - key: NODE_ENV
+        value: production
+      - key: DATABASE_URL
+        fromDatabase:
+          name: assignment-5-db
+          property: connectionString
+      - key: REDIS_URL
+        sync: false
+      - key: R2_ACCOUNT_ID
+        sync: false
+      - key: R2_ACCESS_KEY_ID
+        sync: false
+      - key: R2_SECRET_ACCESS_KEY
+        sync: false
+      - key: R2_BUCKET_NAME
+        sync: false
+      - key: R2_PUBLIC_URL
+        sync: false
+      - key: VIDEO_TMP_DIR
+        value: /tmp/video-jobs
+
+databases:
+  - name: assignment-5-db
+    databaseName: assignment5
+    user: assignment5
+    plan: free
+    region: oregon
