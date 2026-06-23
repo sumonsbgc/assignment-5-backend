@@ -1,8 +1,6 @@
 # Render Blueprint — assignment-5 backend
 # Deploy via: Render Dashboard → New → Blueprint → connect this repo
-#
-# After first deploy, set every env var marked `sync: false` in
-# Render Dashboard → Environment (values are never stored in this file).
+# All env var values are pasted in Render → Environment after first deploy.
 
 services:
   - type: web
@@ -14,26 +12,26 @@ services:
     buildCommand: pnpm install --frozen-lockfile && pnpm build && npx prisma migrate deploy
     startCommand: node dist/index.js
     healthCheckPath: /health
-    autoDeploy: false          # GitHub Actions handles deploys
+    autoDeploy: false
     envVars:
       - key: NODE_ENV
         value: production
+      - key: PORT
+        value: 5000
       - key: DATABASE_URL
-        fromDatabase:
-          name: assignment-5-db
-          property: connectionString
+        sync: false
       - key: REDIS_URL
-        sync: false            # Set to your Upstash Redis URL
+        sync: false
       - key: JWT_ACCESS_SECRET
-        generateValue: true
+        sync: false
       - key: JWT_REFRESH_SECRET
-        generateValue: true
+        sync: false
       - key: JWT_ACCESS_EXPIRES_IN
-        value: 15m
+        value: 7d
       - key: JWT_REFRESH_EXPIRES_IN
         value: 7d
       - key: CSRF_SECRET
-        generateValue: true
+        sync: false
       - key: R2_ACCOUNT_ID
         sync: false
       - key: R2_ACCESS_KEY_ID
@@ -53,7 +51,7 @@ services:
       - key: STRIPE_ANNUAL_PRICE_ID
         sync: false
       - key: FRONTEND_URL
-        sync: false            # e.g. https://assignment-5-frontend.onrender.com
+        sync: false
 
   - type: worker
     name: assignment-5-video-worker
@@ -68,9 +66,7 @@ services:
       - key: NODE_ENV
         value: production
       - key: DATABASE_URL
-        fromDatabase:
-          name: assignment-5-db
-          property: connectionString
+        sync: false
       - key: REDIS_URL
         sync: false
       - key: R2_ACCOUNT_ID
@@ -85,10 +81,3 @@ services:
         sync: false
       - key: VIDEO_TMP_DIR
         value: /tmp/video-jobs
-
-databases:
-  - name: assignment-5-db
-    databaseName: assignment5
-    user: assignment5
-    plan: free
-    region: oregon
