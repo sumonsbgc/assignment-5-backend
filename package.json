@@ -9,7 +9,7 @@
 		"dev": "tsx watch src/index.ts",
 		"worker": "tsx watch src/workers/video-worker.ts",
 		"worker:prod": "node dist/workers/video-worker.js",
-		"build": "tsup src/index.ts src/workers/video-worker.ts --format esm --dts --out-dir dist",
+		"build": "tsup",
 		"start": "node dist/index.js",
 		"db:migrate": "prisma migrate dev",
 		"db:generate": "prisma generate",
