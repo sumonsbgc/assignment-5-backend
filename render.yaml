@@ -9,7 +9,7 @@ services:
     plan: free
     region: oregon
     branch: main
-    buildCommand: pnpm install --frozen-lockfile && pnpm build && npx prisma migrate deploy
+    buildCommand: pnpm install --frozen-lockfile && pnpm build
     startCommand: node dist/index.js
     healthCheckPath: /health
     autoDeploy: false
