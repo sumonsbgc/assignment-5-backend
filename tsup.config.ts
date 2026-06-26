@@ -6,10 +6,11 @@ export default defineConfig({
   outDir: 'dist',
   dts: false,
   clean: true,
-  // The Prisma generated client (prisma/generated/) is CJS and internally
-  // calls require('@prisma/client-runtime-utils'). Bundling CJS into an ESM
-  // chunk breaks those require() calls. Adding createRequire as a banner
-  // polyfills require() so the bundled CJS code works inside the ESM output.
+  // @prisma/client-runtime-utils is an internal Prisma package required by the
+  // generated CJS runtime. Mark it external so esbuild doesn't try to bundle it
+  // (build-time fix). The createRequire banner polyfills require() in the ESM
+  // output so the bundled CJS code can call require() at runtime (runtime fix).
+  external: ['@prisma/client-runtime-utils'],
   banner: {
     js: `import { createRequire } from 'module';\nconst require = createRequire(import.meta.url);`,
   },

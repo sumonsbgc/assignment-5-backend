@@ -22,6 +22,7 @@
 		"@aws-sdk/s3-request-presigner": "^3.820.0",
 		"@prisma/adapter-pg": "^7.8.0",
 		"@prisma/client": "^7.8.0",
+		"@prisma/client-runtime-utils": "7.8.0",
 		"argon2": "^0.43.0",
 		"bullmq": "^5.34.0",
 		"cookie-parser": "^1.4.7",
