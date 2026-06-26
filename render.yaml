@@ -51,7 +51,7 @@ services:
       - key: STRIPE_ANNUAL_PRICE_ID
         sync: false
       - key: FRONTEND_URL
-        sync: false
+        value: https://assignment-5-frontend.onrender.com
 
   - type: worker
     name: assignment-5-video-worker
